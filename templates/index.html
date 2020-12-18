@@ -1,0 +1,64 @@
+<html>
+  <head>
+    <title>online text editor</title>
+  </head>
+  <body>
+    <h1>online text editor</h1>
+    <ul id="messages"></ul>
+    <form id="chatbox">
+      <label for="name">Name: </label> 
+      <input type="text" id="name" /><br />
+      <br />
+      <textarea></textarea><br />
+      <input type="submit" value="送信" />
+    </form>
+    <ul id="status"></ul>
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js">
+    </script>
+    <script>
+      $(function(){
+        var socket = null;
+        var messages = $("#messages")
+        var name = $("#name")
+        var textbox = $("#chatbox textarea")
+
+        $("#chatbox").submit(function(){
+          if (!textbox.val()) return false
+
+          if (!socket) {
+            alert("エラー: WebSocket接続が行われていません。")
+            return false
+          }
+
+          var data = { "name": name.val(), "text": textbox.val() }
+          socket.send(JSON.stringify(data))
+          textbox.val("")
+          return false
+        });
+
+        $(document).on('keyup', '#chatbox textarea', function(e) {
+          var data = { "active": true }
+          socket.send(JSON.stringify(data))
+        });
+
+        if (!window["WebSocket"]) {
+          error.text("WebSocketに対応していないブラウザです。")
+        } else {
+          socket = new WebSocket("ws://{{.Host}}/ws")
+          socket.onclose = function() {
+            error.text("接続が切断されました。Reloadしてください。")
+          }
+          socket.onmessage = function(e) {
+            msg = JSON.parse(e.data);
+	    console.log(msg.active)
+            if (msg.active) {
+            } else {
+              messages.append($("<li>").text(msg.text));
+            }
+          }
+        }
+      })
+    </script>
+  </body>
+</html>
